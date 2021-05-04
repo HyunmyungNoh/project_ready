@@ -1,7 +1,7 @@
 -- 최초 실습용 그리드 추가 ########################################
 -- 메뉴 그룹 - 교육 실습용
 INSERT INTO MENU_M (MENU_ID, MENU_GRP_CD, MENU_NM, MULTI_LANGUAGE, PARENT_ID, LEVEL, SORT, PROG_CD, CREATED_AT, CREATED_BY, UPDATED_AT, UPDATED_BY )
-VALUES (200, 'SYSTEM_MANAGER', '교육용 셈플', '{"ko":"교육용 셈플","en":"교육용 셈플"}',  null, 0, 99, null, sysdate(), 'system', sysdate(), 'system');
+VALUES (200, 'SYSTEM_MANAGER', '교육용 샘플', '{"ko":"교육용 샘플","en":"교육용 샘플"}',  null, 0, 99, null, sysdate(), 'system', sysdate(), 'system');
 
 -- 실습용 그리드 추가
 -- 프로그램 생성
