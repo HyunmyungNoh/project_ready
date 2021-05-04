@@ -1,0 +1,31 @@
+﻿# current project exclude files or directories
+# maven build folder
+/target
+
+# front packages directory
+node_modules
+bower_components
+
+# Logs
+*.log
+**/[Ll]ogs/*.txt
+**/[Ll]ogs/*.zip
+
+# Generated files
+project.lock.json
+.vs
+.vscode
+.svn
+.git
+.idea
+*.iml
+.DS_Store
+.mvn
+.gradle
+
+# java or Intelli
+.settings
+.classpath
+
+# NuGet Packages Directory
+packages

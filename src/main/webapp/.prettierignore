@@ -1,0 +1,11 @@
+# current project exclude files or directories
+/assets/js/axboot/**
+axboot.config.js
+
+# front packages directory
+node_modules
+bower_components
+
+# common files
+*.md
+*.min.*
