@@ -26,13 +26,13 @@ var ACTIONS = axboot.actionExtend(fnObj, {
         axboot.modal.open({
             width: 780,
             height: 450,
-            iframe: {
+            iframe: {   // modal 띄웠을 때 그 컨텐츠가 item이 들어간다.
                 param: 'id=' + (data.id || ''),
-                url: 'teach-grid-modal-content.jsp',
+                url: 'teach-grid-modal-content.jsp',    // /jsp/_education/teach-grid~.jsp와 같음 
             },
             header: { title: '모달등록' },
             callback: function (data) {
-                if (data && data.dirty) {
+                if (data && data.dirty) {   // dirty는 변경여부 체크
                     ACTIONS.dispatch(ACTIONS.PAGE_SEARCH);
                 }
                 this.close();
@@ -143,7 +143,7 @@ fnObj.gridView01 = axboot.viewExtend(axboot.gridView, {
 
         axboot.buttonClick(this, 'data-grid-view-01-btn', {
             create: function () {
-                ACTIONS.dispatch(ACTIONS.MODAL_OPEN);
+                ACTIONS.dispatch(ACTIONS.MODAL_OPEN);   // 위의 DBCLick과 다른 점은 item 인자가 없음
             },
         });
     },

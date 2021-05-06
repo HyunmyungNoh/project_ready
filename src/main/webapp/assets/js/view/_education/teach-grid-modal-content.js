@@ -26,7 +26,7 @@ var ACTIONS = axboot.actionExtend(fnObj, {
                 data: JSON.stringify(item),
                 callback: function (res) {
                     axDialog.alert('저장 되었습니다', function () {
-                        if (parent && parent.axboot && parent.axboot.modal) {
+                        if (parent && parent.axboot && parent.axboot.modal) {   // modal은 부모에 접근도 가능
                             parent.axboot.modal.callback({ dirty: true });
                         }
                     });
@@ -71,7 +71,7 @@ fnObj.pageStart = function () {
     _this.formView01.initView();
 
     if (!modalParams.id) {
-        $('[data-page-btn="delete"]').prop('disabled', true);
+        $('[data-page-btn="delete"]').prop('disabled', true);   // id 안 받았으면 delete 버튼 비활성화
     } else {
         ACTIONS.dispatch(ACTIONS.PAGE_SEARCH);
     }

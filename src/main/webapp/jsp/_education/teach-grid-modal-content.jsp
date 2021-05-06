@@ -2,6 +2,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="ax" tagdir="/WEB-INF/tags" %>
+<!-- 아래 modalParams에서 서버 변수인 id를 받아오는 방법 -->
 <%
     RequestUtils requestUtils = RequestUtils.of(request);
     request.setAttribute("id", requestUtils.getString("id"));
@@ -11,11 +12,11 @@
 <ax:set key="page_auto_height" value="true"/>
 <ax:set key="axbody_class" value="baseStyle"/>
 
-<ax:layout name="modal">
+<ax:layout name="modal">    <!-- 기존 것은 대부분 base를 가리키는데 이 부분은 modal이라는 차이점이 있음 -->
     <jsp:attribute name="script">
         <ax:script-lang key="ax.script" var="LANG" />
         <script>
-            var modalParams = {id: "${id}"};
+            var modalParams = {id: "${id}"};    // 위에서 받아온 id 변수를 modalParams에 넣겠다
         </script>
         <script type="text/javascript" src="<c:url value='/assets/js/view/_education/teach-grid-modal-content.js' />"></script>
     </jsp:attribute>

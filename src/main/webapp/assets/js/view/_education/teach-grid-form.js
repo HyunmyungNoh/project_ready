@@ -171,6 +171,7 @@ fnObj.gridView01 = axboot.viewExtend(axboot.gridView, {
             ],
             body: {
                 onClick: function () {
+                    // grid.body.onClick.call({self: this, dIndex: 0, item: this.list[0]});
                     this.self.select(this.dindex, { selectedClear: true });
                     ACTIONS.dispatch(ACTIONS.ITEM_CLICK, this.item);
                 },
@@ -231,6 +232,14 @@ fnObj.formView01 = axboot.viewExtend(axboot.formView, {
         return true;
     },
     initEvent: function () {
+/*         $('[data-form-view-01-btn]').on('click', function(){
+            var tyep = $(this).data('formView01Btn');
+            if (tyep=='search'){
+                
+            }
+            console.log('수동 이벤트');
+            ACTIONS.dispatch(ACTIONS.FORM_CLEAR);
+        }) */
         axboot.buttonClick(this, 'data-form-view-01-btn', {
             'form-clear': function () {
                 ACTIONS.dispatch(ACTIONS.FORM_CLEAR);
