@@ -2,12 +2,17 @@ package edu.axboot.domain.education;
 
 import com.chequer.axboot.core.annotations.ColumnPosition;
 import edu.axboot.domain.BaseJpaModel;
+import edu.axboot.domain.file.CommonFile;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -62,6 +67,21 @@ public class EducationTeach extends BaseJpaModel<Long> {
 	@Column(name = "USE_YN", length = 1)
 	@ColumnPosition(11)
 	private String useYn;
+
+	@Column(name = "ATTACH_ID", length = 100)
+	@ColumnPosition(12)
+	private String attachId;
+
+	// 실제 테이블과 무관하다. FileID의 리스트만 갖겠다.
+	@Transient
+	private List<Long> fileIdList = new ArrayList<>();
+
+	// CommonFile은 File_l의 Entity임. JoinColumn은 education과 file_l을 연결하겠다는 의미
+	// 1:n의 관계로 이 education table의 attachId가 채워지면 file_l table에도 자동으로 채워진다.
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@NotFound(action = NotFoundAction.IGNORE)
+	@JoinColumn(name = "TARGET_ID", referencedColumnName = "ATTACH_ID", insertable = false, updatable = false)
+	private List<CommonFile> fileList;
 
 	@Override
 	public Long getId() {

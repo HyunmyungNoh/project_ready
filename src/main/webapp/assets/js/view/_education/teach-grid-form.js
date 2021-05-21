@@ -22,6 +22,14 @@ var ACTIONS = axboot.actionExtend(fnObj, {
     PAGE_SAVE: function (caller, act, data) {
         if (caller.formView01.validate()) {
             var item = caller.formView01.getData();
+
+            var fileIds = [];
+            var files = ax5.util.deepCopy(caller.formView01.UPLOAD.uploadedFiles);
+            $.each(files, function(idx, o) {
+                fileIds.push(o.id);
+            });
+            item.fileIdList = fileIds;
+
             if (!item.id) item.__created__ = true;
             axboot.ajax({
                 type: 'POST',
@@ -98,8 +106,12 @@ fnObj.pageStart = function () {
     this.pageButtonView.initView();
     this.searchView.initView();
     this.gridView01.initView();
-    this.formView01.initView();
-
+    this.formView01.initView({
+        viewMode: false,
+        editorReady: function () {
+            //_this.formView01.resize();
+        }
+    });
     ACTIONS.dispatch(ACTIONS.PAGE_SEARCH);
 };
 
@@ -188,7 +200,12 @@ fnObj.formView01 = axboot.viewExtend(axboot.formView, {
         return { useYn: 'Y' };
     },
     getData: function () {
+        var _this = this;
+
+        var remark = "";
+        if (_this.editor) remark = _this.editor.getData();
         var data = this.modelFormatter.getClearData(this.model.get()); // 모델의 값을 포멧팅 전 값으로 치환.
+        data.remark = remark;
         return $.extend({}, data);
     },
     setData: function (data) {
@@ -197,6 +214,16 @@ fnObj.formView01 = axboot.viewExtend(axboot.formView, {
 
         this.model.setModel(data);
         this.modelFormatter.formatting(); // 입력된 값을 포메팅 된 값으로 변경
+
+        var _this = this;
+
+        setTimeout(function(){
+            _this.editor.setData(data.remark);
+        }, 100);
+
+        if (typeof data.fileList != 'undefined' && data.fileList.length > 0) {
+            _this.UPLOAD.setUploadedFiles(data.fileList);
+        }
     },
     validate: function () {
         var item = this.model.get();
@@ -246,7 +273,158 @@ fnObj.formView01 = axboot.viewExtend(axboot.formView, {
             },
         });
     },
-    initView: function () {
+    initEditor: function(obj) {
+        var _this = this;
+        var readOnly = (obj.viewMode) ? true : false;
+
+        this.editor = CKEDITOR.replace('editor1', {
+            filebrowserBrowseUrl: CONTEXT_PATH + '/ckeditor/fileBrowser?targetType=' + fnObj.formView01.getData().bbsId + '&targetId=' + UUID,
+            filebrowserWindowWidth: '960',
+            filebrowserWindowHeight: '600',
+            imageUploadUrl: CONTEXT_PATH + '/ckeditor/uploadImage?targetType=' + fnObj.formView01.getData().bbsId + '&targetId=' + UUID,
+            toolbarGroups: (function () {
+
+                var viewmode_groups = [
+                    {name: 'insert', groups: ['others', 'insert']},
+                    {name: 'tools', groups: ['tools']},
+                    {name: 'styles', groups: ['styles']}
+                ];
+
+                var groups = [
+                    { name: 'others', groups: [ 'others' ] },
+                    { name: 'insert', groups: [ 'insert' ] },
+                    { name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
+                    { name: 'links', groups: [ 'links' ] },
+                    '/',
+                    { name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
+                    { name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
+                    '/',
+                    { name: 'styles', groups: [ 'styles' ] },
+                    { name: 'colors', groups: [ 'colors' ] }
+                ];
+
+                return (readOnly) ? viewmode_groups : groups;
+
+            })(),
+            readOnly: readOnly
+        });
+
+        this.editor.once('instanceReady', function () {
+            if (obj && obj.editorReady) {
+                obj.editorReady();
+            }
+        });
+        this.editor.on('notificationShow', function (evt) {
+            evt.cancel();
+        });
+        this.editor.on('notificationUpdate', function (evt) {
+            evt.cancel();
+        });
+
+        var form = '';
+        if (!obj.viewMode){
+            CKEDITOR.instances.editor1.setData(form);
+        }
+    },
+    initUploader: function () {
+        var _this = this;
+        _this.UPLOAD = new ax5.ui.uploader({
+            //debug: true,
+            target: $('[data-ax5uploader="upload1"]'),
+            form: {
+                action: '/api/v1/files/upload',
+                fileName: 'file',
+            },
+            multiple: true,
+            manualUpload: false,
+            progressBox: true,
+            progressBoxDirection: 'left',
+            dropZone: {
+                target: $('[data-uploaded-box="upload1"]'),
+            },
+            uploadedBox: {
+                target: $('[data-uploaded-box="upload1"]'),
+                icon: {
+                    download: '<i class="cqc-download" aria-hidden="true"></i>',
+                    delete: '<i class="cqc-minus" aria-hidden="true"></i>',
+                },
+                columnKeys: {
+                    name: 'fileNm',
+                    type: 'extension',
+                    size: 'fileSize',
+                    uploadedName: 'saveName',
+                    uploadedPath: '',
+                    downloadPath: '',
+                    previewPath: '',
+                    thumbnail: '',
+                },
+                lang: {
+                    supportedHTML5_emptyListMsg: '<div class="text-center" style="padding-top: 30px;">첨부파일이 없습니다. </div>',
+                    emptyListMsg: '<div class="text-center" style="padding-top: 30px;">Empty of List.</div>',
+                },
+                onchange: function () {},
+                onclick: function () {
+                    var fileIndex = this.fileIndex;
+                    var file = this.uploadedFiles[fileIndex];
+
+                    switch (this.cellType) {
+                        case 'delete':
+                            axDialog.confirm(
+                                {
+                                    theme: 'danger',
+                                    msg: '삭제하시겠습니까?',
+                                },
+                                function () {
+                                    if (this.key == 'ok') {
+                                        $.ajax({
+                                            contentType: 'application/json',
+                                            method: 'get',
+                                            url: '/api/v1/files/delete',
+                                            /*
+                                        data: JSON.stringify([{
+                                            id: file.id
+                                        }]),
+                                        */
+                                            data: { id: file.id },
+                                            success: function (res) {
+                                                if (res.error) {
+                                                    alert(res.error.message);
+                                                    return;
+                                                }
+                                                _this.UPLOAD.removeFile(fileIndex);
+                                            },
+                                        });
+                                    }
+                                }
+                            );
+                            break;
+
+                        case 'download':
+                            if (file.download) {
+                                location.href = file.download;
+                            }
+                            break;
+                    }
+                },
+            },
+            validateSelectedFiles: function () {
+                var limitCount = 5;
+                if (this.uploadedFiles.length + this.selectedFiles.length > limitCount) {
+                    alert('You can not upload more than ' + limitCount + ' files.');
+                    return false;
+                }
+                return true;
+            },
+            onprogress: function () {},
+            onuploaderror: function () {
+                console.log(this.error);
+                axDialog.alert(this.error.message);
+            },
+            onuploaded: function () {},
+            onuploadComplete: function () {},
+        });
+    },
+    initView: function (obj) {
         var _this = this; // fnObj.formView01
 
         _this.target = $('.js-form');
@@ -255,6 +433,8 @@ fnObj.formView01 = axboot.viewExtend(axboot.formView, {
         this.model.setModel(this.getDefaultData(), this.target);
         this.modelFormatter = new axboot.modelFormatter(this.model); // 모델 포메터 시작
 
+        this.initEditor(obj);
+        this.initUploader();
         this.initEvent();
     },
 });

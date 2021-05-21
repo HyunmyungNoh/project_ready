@@ -51,6 +51,17 @@ var ACTIONS = axboot.actionExtend(fnObj, {
 });
 
 // fnObj 기본 함수 스타트와 리사이즈
+// axboot.js에 pageStart()부터 ready에 있음
+// 원래는 $(function() {}); 안에 pageStart 안의 코드를 넣을 수도 있다.
+/* axboot.pageStart = function () {
+    if (window[axboot.def.pageFunctionName] && window[axboot.def.pageFunctionName].pageStart) {
+        // 프레임 셋에 타이머 초기화.
+        if (top.fnObj && top.fnObj.activityTimerView) {
+            top.fnObj.activityTimerView.update();
+        }
+        window[axboot.def.pageFunctionName].pageStart();
+    }
+}; */
 fnObj.pageStart = function () {
     this.pageButtonView.initView();
     this.searchView.initView();

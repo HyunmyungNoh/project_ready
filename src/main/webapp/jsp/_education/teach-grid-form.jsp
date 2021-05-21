@@ -1,17 +1,43 @@
+<%@ page import="com.chequer.axboot.core.api.Api" %>
+<%@ page import="com.chequer.axboot.core.utils.RequestUtils" %>
+
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="ax" tagdir="/WEB-INF/tags" %>
+
+<%
+    String uuid = java.util.UUID.randomUUID().toString().replaceAll("-","");
+    RequestUtils requestUtils = RequestUtils.of(request);
+    requestUtils.setAttribute("UUID", uuid);
+%>
 
 <ax:set key="title" value="${pageName}"/>
 <ax:set key="page_desc" value="${PAGE_REMARK}"/>
 <ax:set key="page_auto_height" value="true"/>
 
 <ax:layout name="base">
+    <jsp:attribute name="css">
+        <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/ax5ui/ax5ui-uploader/master/dist/ax5uploader.css" />
+    </jsp:attribute>
     <jsp:attribute name="script">
         <ax:script-lang key="ax.script" var="LANG" />
         <ax:script-lang key="ax.base" var="COL" />
+        <script type="text/javascript" src="https://cdn.rawgit.com/ax5ui/ax5ui-uploader/master/dist/ax5uploader.js"></script>
+        <script type="text/javascript" src="<c:url value='/assets/plugins-fix/ckeditor/ckeditor.js' />"></script>
         <script type="text/javascript" src="<c:url value='/assets/js/view/_education/teach-grid-form.js' />"></script>
     </jsp:attribute>
+
+    <jsp:attribute name="js">
+        <script type="text/javascript">
+            var UUID = "${UUID}";
+        </script>
+    </jsp:attribute>
+    <jsp:attribute name="css">
+        <style type="text/css">
+            /*.editor1{width:100%; border:1px solid #D7D7D7; border-radius: 3px; overflow: hidden; background: white;}*/
+        </style>
+    </jsp:attribute>
+
     <jsp:body>
 
         <ax:page-buttons></ax:page-buttons>
@@ -109,7 +135,19 @@
 
                             <ax:tr labelWidth="120px">
                                 <ax:td label="비고" width="100%">
-                                    <textarea name="remark" data-ax-path="remark" rows="5" class="form-control"></textarea>
+                                    <!-- <textarea name="remark" id="remark" data-ax-path="remark" rows="5" class="form-control"></textarea> -->
+                                    <textarea name="editor1" id="editor1" data-ax-path="remark" rows="5" class="form-control"></textarea>
+                                </ax:td>
+                            </ax:tr>
+
+                            <ax:tr labelWidth="120px">
+                                <ax:td label="첨부파일 <i class='icon-info-circled cp'></i>" width="100%">
+                                    <div data-ax5uploader="upload1">
+                                        <input type="hidden" id="targetType" name="targetType" value="EDUCATION_TEACH" />
+                                        <button data-ax5uploader-button="selector" class="btn btn-primary">Select File (*/*)</button>
+                                        (Upload Max fileSize 100MB)
+                                        <div data-uploaded-box="upload1" data-ax5uploader-uploaded-box="inline"></div>
+                                    </div>
                                 </ax:td>
                             </ax:tr>
 

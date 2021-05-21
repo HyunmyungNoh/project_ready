@@ -18,6 +18,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -51,12 +54,26 @@ public class TeachExcelController extends BaseController {
      * @param : fileId
      * @return : ApiStatus.SUCCESS
      */
-    @ApiOperation(value = "엑셀업로드", notes = "/resources/excel/education_upload.xml")
+/*    @ApiOperation(value = "엑셀업로드", notes = "/resources/excel/education_upload.xml")
     @RequestMapping(value = "/excelupload", method = {RequestMethod.POST}, produces = APPLICATION_JSON)
     public ApiResponse excel(HttpServletRequest request) throws Exception{
         String resultMsg = educationTeachService.uploadExcelData(Long.parseLong(request.getParameter("fileId").toString()));
 
         if (!resultMsg.equals("")) {
+            return ApiResponse.error(ApiStatus.SYSTEM_ERROR, resultMsg);
+        }
+
+        return ok();
+    }*/
+
+    /* 5월 7일 전만호 강사님 */
+    @ApiOperation(value = "엑셀업로드", notes = "/resources/excel/education_upload.xml")
+    @RequestMapping(value = "/excelupload", method = {RequestMethod.POST}, produces = APPLICATION_JSON)
+    public ApiResponse excel(@RequestParam(value = "formFile") MultipartFile multipartFile) throws Exception{
+
+        String resultMsg = educationTeachService.uploadFileByExcel(multipartFile);
+
+        if (!StringUtils.isEmpty(resultMsg)) {
             return ApiResponse.error(ApiStatus.SYSTEM_ERROR, resultMsg);
         }
 

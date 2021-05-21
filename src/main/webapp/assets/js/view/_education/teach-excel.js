@@ -43,7 +43,7 @@ var ACTIONS = axboot.actionExtend(fnObj, {
                 data: data,
                 success: function (res) {
                     upload.val('');
-                    if (res.status == 200) {
+                    if (res.status == 0) {
                         alert('업로드 완료');
                     } else {
                         alert('업로드 실패');

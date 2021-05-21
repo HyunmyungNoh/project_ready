@@ -2,16 +2,22 @@ package edu.axboot.domain.education;
 
 import com.chequer.axboot.core.api.ApiException;
 import com.chequer.axboot.core.parameter.RequestParams;
+import com.chequer.axboot.core.utils.CoreUtils;
 import com.querydsl.core.BooleanBuilder;
 import edu.axboot.domain.BaseService;
 import edu.axboot.domain.file.CommonFile;
 import edu.axboot.domain.file.CommonFileService;
+import edu.axboot.domain.file.UploadParameters;
+import edu.axboot.fileupload.FileUploadService;
+import edu.axboot.fileupload.UploadFile;
 import org.apache.commons.io.FileUtils;
 import org.jxls.reader.ReaderBuilder;
 import org.jxls.reader.ReaderConfig;
+import org.jxls.reader.XLSReadStatus;
 import org.jxls.reader.XLSReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
@@ -20,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -39,6 +46,9 @@ public class EducationTeachService extends BaseService<EducationTeach, Long> {
 
     @Inject
     private EducationTeachMapper educationTeachMapper;
+
+    @Autowired
+    private FileUploadService fileuploadService;
 
     @Inject
     private CommonFileService commonFileService;
@@ -148,6 +158,18 @@ public class EducationTeachService extends BaseService<EducationTeach, Long> {
     @Transactional
     public void saveUsingQueryDsl(EducationTeach entity) {
         if (entity.getId() == null || entity.getId() == 0) {
+            if (entity.getFileIdList().size() > 0) {
+                entity.setAttachId(CoreUtils.getUUID().replaceAll("-", ""));
+
+                List<CommonFile> commonFileList = new ArrayList<>();
+
+                for (Long fileId: entity.getFileIdList()) {
+                    CommonFile commonFile = commonFileService.findOne(fileId);
+                    commonFile.setTargetId(entity.getAttachId());
+                    commonFileList.add(commonFile);
+                }
+                entity.setFileList(commonFileList);
+            }
             this.educationTeachRepository.save(entity);
         } else {
             update(qEducationTeach)
@@ -292,4 +314,62 @@ public class EducationTeachService extends BaseService<EducationTeach, Long> {
         return resultMsg;
     }
 
+    /* 5월 7일 전만호 강사님 */
+    public String saveDataByExcel(UploadFile uploadFile) throws Exception {
+        String resultMsg = "";
+
+        ReaderConfig.getInstance().setSkipErrors(true);
+
+        // XML 정의.
+        XLSReader mainReader = ReaderBuilder.buildFromXML(new ClassPathResource("/excel/education_upload.xml").getInputStream());
+        List<EducationTeach> entities = new ArrayList();
+
+        Map beans = new HashMap();
+        beans.put("educationList", entities);
+
+        String excelFile = uploadFile.getSavePath();
+        File file = new File(excelFile);
+        XLSReadStatus read = mainReader.read(FileUtils.openInputStream(file), beans);
+
+        int rowIndex = 1;
+
+        // 필요한 값을 꼭 넣어야 함
+        for (EducationTeach entity : entities) {
+            if (StringUtils.isEmpty(entity.getCompanyNm())) {
+                resultMsg = String.format("%d 번째 줄의 회사명이 비어있습니다.", rowIndex);
+                throw new ApiException(String.format("%d 번째 줄의 회사명이 비어있습니다.", rowIndex));
+            }
+
+            if (StringUtils.isEmpty(entity.getCeo())) {
+                resultMsg = String.format("%d 번째 줄의 대표자가 비어있습니다.", rowIndex);
+                throw new ApiException(String.format("%d 번째 줄의 대표자가 비어있습니다.", rowIndex));
+            }
+
+            if (StringUtils.isEmpty(entity.getUseYn())) {
+                resultMsg = String.format("%d 번째 줄의 사용여부가 비어있습니다.", rowIndex);
+                throw new ApiException(String.format("%d 번째 줄의 사용여부가 비어있습니다.", rowIndex));
+            }
+
+            save(entity);
+            rowIndex++;
+        }
+        return resultMsg;
+    }
+
+    @Transactional
+    public String uploadFileByExcel(MultipartFile multipartFile) throws Exception {
+        UploadParameters uploadParameters = new UploadParameters();
+        uploadParameters.setMultipartFile(multipartFile);
+
+        // 파일 업로드
+        UploadFile uploadFile = fileuploadService.addCommonFile(uploadParameters);
+
+        // 파일 저장
+        String result = this.saveDataByExcel(uploadFile);
+
+        // 임시로 올렸던 파일 삭제
+        fileuploadService.deleteFile(uploadFile.getSavePath());
+
+        return result;
+    }
 }
